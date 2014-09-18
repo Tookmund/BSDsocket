@@ -1,8 +1,6 @@
 #ifndef _BSDSOCKET_H_
 #define _BSDSOCKET_H_
 
-#include <errno.h>
-#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
