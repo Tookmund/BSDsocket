@@ -9,7 +9,7 @@
 #include "BSDsocket.h"
 
 struct hostent *sock_gethostbyname(char *name) {
-	struct hostent *hp = gethostbyname(name);
+	struct hostent *hp = gethostbyname(name,MAXHOSTNAME);
 	if (hp == NULL) {
 		/* error checking as described by man page
 		http://linux.die.net/man/3/gethostbyname */
@@ -38,7 +38,6 @@ int sock_listener(unsigned short portnum,int max_connect) {
 	struct sockaddr_in sa;
 	struct hostent *hp;
 	memset(&sa, 0,sizeof(struct sockaddr_in)); /* wipe sock address struct */
-	gethostname(myname,MAXHOSTNAME);
 	hp = sock_gethostbyname(myname);
 	if (hp = NULL)
 		return(-1);
