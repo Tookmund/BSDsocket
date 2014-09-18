@@ -8,7 +8,7 @@
 
 int main () {
 	int listener = sock_listener(PORT,1);
-	int client = sock_connectto("127.0.0.1",PORT);
+	int client = sock_connectto("localhost",PORT);
 	int server = sock_connection(listener);
 	
 	char *message = MESSAGE;
