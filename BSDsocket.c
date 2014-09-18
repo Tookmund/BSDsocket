@@ -15,11 +15,11 @@ struct hostent *sock_gethostbyname(char *name) {
 		http://linux.die.net/man/3/gethostbyname */
 		switch(h_errno) {
 			case HOST_NOT_FOUND:
-				printf("The specified host is unknown\n");
+				printf("The specified host (%s) is unknown\n",name);
 				break;
 			case NO_ADDRESS:
 			case NO_DATA:
-				printf("The requested name is valid but does not have an IP address\n");
+				printf("The requested name (%s) is valid but does not have an IP address\n",name);
 				break;
 			case NO_RECOVERY:
 			printf("A nonrecoverable name server error occurred\n");
@@ -51,7 +51,7 @@ int sock_listener(unsigned short portnum,int max_connect) {
 	}
 	int retval = bind(s,&sa,sizeof(struct sockaddr_in));
 	if (retval < 0) {
-		perror("bind socket listener");
+		perror("bind socket listener to %uh", portnum);
 		close(s);
 		return(-1);
 	}
@@ -59,16 +59,16 @@ int sock_listener(unsigned short portnum,int max_connect) {
 	return(s);
 }
 
-int sock_connection(int s) {
+int sock_getconnection(int s) {
 	int t;
 	t = accept(s,NULL,NULL);
 	if (t < 0) {
-		perror("Connect");
+		perror("Connection");
 	}
 	return(t);
 }
 
-int sock_connector(char *hostname,unsigned short portnum) {
+int sock_connectto(char *hostname,unsigned short portnum) {
 	struct sockaddr_in sa;
 	struct hostent *hp;
 	hp = sock_gethostbyname(hostname);
@@ -81,14 +81,42 @@ int sock_connector(char *hostname,unsigned short portnum) {
 	sa.sin_port= htons((u_short)portnum);
 	s = socket(hp->h_addrtype,SOCK_STREAM,0);
 	if(s < 0) {
-		perror("create connector");
+		perror("create connector to %s:%uh",hostname,portnum);
 		return(-1);
 	}
 	int retval = connect(s,&sa,sizeof(sa));
 	if(retval < 0) {
-		perror("connect connector");
+		perror("connect connector to %s:%uh",hostname,portnum);
 		close(s);
 		return(-1);
 	}
 	return(s);
+}
+int sock_read(int s, char *buf, int n) {
+	int bcount = 0;
+	int br = 0;
+	while (bcount < n) {
+		br = read(s, buf,n-bcount);
+		if (br > 0) {
+			bcount += br;
+			buf += br; /* increment buffer pointer so as not to overwrite previous data */
+		}
+		else if (br < 0)
+			return(-1);
+	}
+	return(bcount);
+}
+int sock_write(int s, char *buf, int n) {
+	int bcount = 0;
+	int br = 0;
+	while (bcount < n) {
+		br = write(s, buf,n-bcount);
+		if (br > 0) {
+			bcount += br;
+			buf += br; /* increment buffer pointer so as not to overwrite previous data */
+		}
+		else if (br < 0)
+			return(-1);
+	}
+	return(bcount);
 }
