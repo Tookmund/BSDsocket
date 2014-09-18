@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "BSDsocket.h"
 
 struct hostent *sock_gethostbyname(char *name) {
 	struct hostent *hp = gethostbyname(name);
