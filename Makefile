@@ -21,6 +21,7 @@ dynamic: $(SOCK).o $(SOCK).so
 	
 install: dynamic
 	cp lib$(SOCK).so $(INSTALL)
+	ldconfig
 	
 clean:
 	rm -rf *.so *.o *.a 
