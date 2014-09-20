@@ -9,7 +9,7 @@
 int main () {
 	int listener = sock_listener(PORT,1);
 	int client = sock_connectto("localhost",PORT);
-	int server = sock_connection(listener);
+	int server = sock_accept(listener);
 	
 	char *message = MESSAGE;
 	printf("Sending: %s",message);

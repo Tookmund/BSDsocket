@@ -11,7 +11,7 @@
 
 struct hostent *sock_gethostbyname(char *name);
 int sock_listener(unsigned short portnum,int max_connect);
-int sock_getconnection(int s);
+int sock_accept(int s);
 int sock_connectto(char *hostname,unsigned short portnum);
 int sock_read(int s, char *buf, int n);
 int sock_write(int s, char *buf, int n);

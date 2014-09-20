@@ -58,7 +58,7 @@ int sock_listener(unsigned short portnum,int max_connect) {
 	return(s);
 }
 
-int sock_getconnection(int s) {
+int sock_accept(int s) {
 	int t;
 	t = accept(s,NULL,NULL);
 	if (t < 0) {
