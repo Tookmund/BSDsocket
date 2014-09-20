@@ -9,7 +9,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-struct hostent *sock_gethostbyname(char *name);
 int sock_listener(unsigned short portnum,int max_connect);
 int sock_accept(int s);
 int sock_connectto(char *hostname,unsigned short portnum);

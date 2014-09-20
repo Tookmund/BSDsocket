@@ -5,56 +5,29 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <limits.h>
 #include <string.h>
 #include "BSDsocket.h"
 
-#define HOST_NAME_MAX 255 /* shouldn't be necessary and is probably dangerous */
-struct hostent *sock_gethostbyname(char *name) {
-	struct hostent *hp = gethostbyname(name/* ,HOST_NAME_MAX */);
-	if (hp == NULL) {
-		/* error checking as described by man page
-		http://linux.die.net/man/3/gethostbyname */
-		switch(h_errno) {
-			case HOST_NOT_FOUND:
-				printf("The specified host (%s) is unknown\n",name);
-				break;
-			/* case NO_ADDRESS: */
-			case NO_DATA:
-				printf("The requested name (%s) is valid but does not have an IP address\n",name);
-				break;
-			case NO_RECOVERY:
-			printf("A nonrecoverable name server error occurred\n");
-				break;
-			case TRY_AGAIN:
-				printf("A temporary error occurred on an authoritative name server. Try again later\n");
-			default:
-				break;
-		}
-	}
-	return(hp);
-}
-
 int sock_listener(unsigned short portnum,int max_connect) {
-	char myname[HOST_NAME_MAX+1]; 
+	char *myname = "127.0.0.1";
 	int s; /* socket */
 	struct sockaddr_in sa;
-	struct hostent *hp;
 	memset(&sa,0,sizeof(sa)); /* wipe sock address struct */
-	hp = sock_gethostbyname(myname);
-	if (hp == NULL)
-		return(-1);
-	sa.sin_family = hp->h_addrtype;
-	sa.sin_port = htons(portnum);
+	//getnameinfo((const struct sockaddr *) &sa,sizeof(sa),myname,sizeof(myname),NULL,0,0);
 	s = socket(AF_INET,SOCK_STREAM,0);
 	if (s < 0) {
 		perror("create socket listener");
 		return(-1);
 	}
+	sa.sin_family = AF_INET;
+	sa.sin_port = htons(portnum);
+	inet_pton(AF_INET,myname,&sa.sin_addr);
 	int retval = bind(s,(struct sockaddr *) &sa,sizeof(struct sockaddr));
 	if (retval < 0) {
-		printf("bind socket listener to %uh", portnum);
+		printf("bind socket listener to %u", portnum);
 		perror("");
 		close(s);
 		return(-1);
@@ -74,22 +47,17 @@ int sock_accept(int s) {
 
 int sock_connectto(char *hostname,unsigned short portnum) {
 	struct sockaddr_in sa;
-	struct hostent *hp;
 	int s;
-	hp = sock_gethostbyname(hostname);
-	if(hp == NULL) {
-		return(-1);
-	}
-	memset(&sa,0,sizeof(sa));
-	memcpy((char *)&sa.sin_addr,hp->h_addr_list[0],hp->h_length);
-	sa.sin_family = hp->h_addrtype;
-	sa.sin_port = htons((unsigned short)portnum);
-	s = socket(hp->h_addrtype,SOCK_STREAM,0);
+	/* getnameinfo((const struct sockaddr *) &sa,sizeof(sa),hostname,sizeof(hostname),NULL,0,0); */
+	sa.sin_family = AF_INET;
+	s = socket(sa.sin_family,SOCK_STREAM,0);
 	if(s < 0) {
 		perror("");
 		printf("create connector to %s:%uh",hostname,portnum);
 		return(-1);
 	}
+	sa.sin_port = htons(portnum);
+	inet_pton(AF_INET,hostname,&sa.sin_addr);
 	int retval = connect(s,(struct sockaddr *) &sa,sizeof(sa));
 	if(retval < 0) {
 		perror("");

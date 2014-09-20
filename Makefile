@@ -1,9 +1,9 @@
 SOCK = BSDsocket
 CC = gcc
-FLAGS = -ansi -Wall -Werror
+FLAGS = -Wall -Werror
 INSTALL = /usr/local/lib
 
-all: test static dynamic
+all: test lib$(SOCK).a lib$(SOCK).so
 
 test: test.c $(SOCK).c
 	$(CC) $(FLAGS) test.c $(SOCK).c -o test
