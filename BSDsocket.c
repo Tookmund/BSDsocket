@@ -6,10 +6,13 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <limits.h>
+#include <string.h>
 #include "BSDsocket.h"
 
+#define HOST_NAME_MAX 255 /* shouldn't be necessary and is probably dangerous */
 struct hostent *sock_gethostbyname(char *name) {
-	struct hostent *hp = gethostbyname(name,MAXHOSTNAME);
+	struct hostent *hp = gethostbyname(name/* ,HOST_NAME_MAX */);
 	if (hp == NULL) {
 		/* error checking as described by man page
 		http://linux.die.net/man/3/gethostbyname */
@@ -17,7 +20,7 @@ struct hostent *sock_gethostbyname(char *name) {
 			case HOST_NOT_FOUND:
 				printf("The specified host (%s) is unknown\n",name);
 				break;
-			case NO_ADDRESS:
+			/* case NO_ADDRESS: */
 			case NO_DATA:
 				printf("The requested name (%s) is valid but does not have an IP address\n",name);
 				break;
@@ -29,17 +32,18 @@ struct hostent *sock_gethostbyname(char *name) {
 			default:
 				break;
 		}
-		return(hp);
+	}
+	return(hp);
 }
 
 int sock_listener(unsigned short portnum,int max_connect) {
-	char myname[MAXHOSTNAME+1]; 
+	char myname[HOST_NAME_MAX+1]; 
 	int s; /* socket */
 	struct sockaddr_in sa;
 	struct hostent *hp;
-	memset(&sa, 0,sizeof(struct sockaddr_in)); /* wipe sock address struct */
+	memset(&sa,0,sizeof(sa)); /* wipe sock address struct */
 	hp = sock_gethostbyname(myname);
-	if (hp = NULL)
+	if (hp == NULL)
 		return(-1);
 	sa.sin_family = hp->h_addrtype;
 	sa.sin_port = htons(portnum);
@@ -48,9 +52,10 @@ int sock_listener(unsigned short portnum,int max_connect) {
 		perror("create socket listener");
 		return(-1);
 	}
-	int retval = bind(s,&sa,sizeof(struct sockaddr_in));
+	int retval = bind(s,(struct sockaddr *) &sa,sizeof(struct sockaddr));
 	if (retval < 0) {
-		perror("bind socket listener to %uh", portnum);
+		printf("bind socket listener to %uh", portnum);
+		perror("");
 		close(s);
 		return(-1);
 	}
@@ -70,22 +75,25 @@ int sock_accept(int s) {
 int sock_connectto(char *hostname,unsigned short portnum) {
 	struct sockaddr_in sa;
 	struct hostent *hp;
+	int s;
 	hp = sock_gethostbyname(hostname);
 	if(hp == NULL) {
 		return(-1);
 	}
 	memset(&sa,0,sizeof(sa));
-	memcpy((char *)&sa.sin_addr,hp->h_addr,hp->h_length);
-	sa.sin_family= hp->h_addrtype;
-	sa.sin_port= htons((u_short)portnum);
+	memcpy((char *)&sa.sin_addr,hp->h_addr_list[0],hp->h_length);
+	sa.sin_family = hp->h_addrtype;
+	sa.sin_port = htons((unsigned short)portnum);
 	s = socket(hp->h_addrtype,SOCK_STREAM,0);
 	if(s < 0) {
-		perror("create connector to %s:%uh",hostname,portnum);
+		perror("");
+		printf("create connector to %s:%uh",hostname,portnum);
 		return(-1);
 	}
-	int retval = connect(s,&sa,sizeof(sa));
+	int retval = connect(s,(struct sockaddr *) &sa,sizeof(sa));
 	if(retval < 0) {
-		perror("connect connector to %s:%uh",hostname,portnum);
+		perror("");
+		printf("connect connector to %s:%uh",hostname,portnum);
 		close(s);
 		return(-1);
 	}
