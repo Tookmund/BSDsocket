@@ -24,7 +24,7 @@ install: dynamic
 	ldconfig
 	
 clean:
-	rm -rf *.so *.o *.a 
+	rm -rf *.so *.o *.a test
 
 uninstall:
 	rm $(INSTALL)/$(SOCK).so
